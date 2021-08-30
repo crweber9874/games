@@ -5,9 +5,7 @@ RUN apk update && apk upgrade
 
 FROM rocker/rstudio:latest
 
-RUN R -e "install.packages('lavaan', dependencies=TRUE)"
-RUN R -e "install.packages('tidyverse', dependencies=TRUE)"
-RUN R -e "install.packages('brms', dependencies=TRUE)"
-
+#RUN R -e "install.packages('lavaan', dependencies=TRUE)"
+#RUN R -e "install.packages('tidyverse', dependencies=TRUE)"
 
 
