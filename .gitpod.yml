@@ -1,7 +1,2 @@
-tasks:
-  - init: yarn install
-    command: yarn build
-# Ports to expose on workspace startup
-ports:
-  - port: 80
-    onOpen: open-preview
+image:
+  file: .github.Dockerfile
