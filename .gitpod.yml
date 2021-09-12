@@ -1,4 +1,2 @@
 image:
   file: .gitpod.Dockerfile
-ports:
-- "5001:5000"
