@@ -1,4 +1,4 @@
-PSR =t(array(c(1,0,5,4), dim = c(2,2)))  ### PD 
+PSR =t(array(c(5,0,4,1), dim = c(2,2)))  ### PD 
 #cats = nrow(PSR)
 #1-ADD, 2=ACC, 3 =TFT
 types = 3
@@ -17,7 +17,7 @@ strategy_matrix = data.frame("strategy" = NA, "obs_i" = NA, "obs_j" = NA)
 strategy_matrix = data.frame()
 
 ## Always view from perspective of row player; just swap to calculate y###
-PSR =t(array(c(4,0,5,1), dim = c(2,2)))  ### PD 
+payoff_counter = PSR =t(array(c(4,0,5,1), dim = c(2,2)))  ### PD 
 
 ##Column player is column players behavior
 tit.for.tat      <-   function(strategy_matrix, column_player = 1,  t = 1, .....){

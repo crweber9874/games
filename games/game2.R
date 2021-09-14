@@ -1,7 +1,6 @@
 
 
-
-
+strategies = list(
 ##Column player is column players behavior
 tit.for.tat      <-   function(strategy_matrix, column_player = 1,  t = 1, .....){
   if(t==1) i = 1
@@ -9,19 +8,21 @@ tit.for.tat      <-   function(strategy_matrix, column_player = 1,  t = 1, .....
   tmp = data.frame("i" = i, "j" = column_player, time = t)
   nam = ifelse(i ==1, "C", "D")
   return(list(tmp, nam))
-}
+},
 always.defect    <-   function(strategy_matrix, column_player = 1,  t = 1, .....){
   i = 2
   tmp = data.frame("i" = i, "j" = column_player, time = t)
   nam = ifelse(i ==1, "C", "D")
   return(list(tmp, nam))
-}
+},
+
 always.cooperate <-   function(strategy_matrix, column_player = 2,  t = 1, .....){
   i = 1
   tmp = data.frame("i" = i, "j" = column_player, time = t)
   nam = ifelse(i ==1, "C", "D")
   return(list(tmp, nam))
 }
+)
 
 
 ### Simple simulation
@@ -82,12 +83,12 @@ simulate_1 = function(N=100, G=100, mr = 0.025,
   return(data)
 } 
 
+PSR =t(array(c(4,0,5,1), dim = c(2,2)))  ### PD 
+
 ### Iterated three type PD.
-simulate_2 = function(N=100, G=100, mr = 0.025, 
+simulation_tourn = function(N=3, G=10, mr = 0.025, 
                       initial.fitness = 10, rounds = 5, 
-                      cats = 3, PSR,
-                      strategies = c("tit.for.tat", "always.defect", 
-                                     "always.cooperate")){
+                      cats = 3, PSR, strategies = strategies){
   Lottery = array(0, dim = c(N,cats))
   Tot     = array(0, dim = c(cats))
   P       = array(0, dim = c(cats))
@@ -96,25 +97,25 @@ simulate_2 = function(N=100, G=100, mr = 0.025,
   data = array(0, dim = c(G, cats))
   pop[1:N,1] = initial.fitness
   #pop[1:N,2] = as.integer(1 + cats*runif(N)) 
-  pop[1:N,2] = sample(c(1:cats), N, prob = c(0.33, 0.33, 0.1), replace = TRUE)
+  pop[1:N,2] = sample(c(1:cats), N, prob = c(0.25, 0.50, 0.25), replace = TRUE)
   for(g in 1:G){
     for (r in 1:rounds){
      for(x in 1:N){
         y = as.integer(1 + N*runif(1))
         tmp1 = tmp2 = c()
-        if(pop[x,2] == 1) tmp1 = strategies[1]
-        if(pop[x,2] == 2) tmp1 = strategies[2]
-        if(pop[x,2] == 3) tmp1 = strategies[3]
+        if(pop[x,2] == 1) tmp1 = strategies[[1]]
+        if(pop[x,2] == 2) tmp1 = strategies[[2]]
+        if(pop[x,2] == 3) tmp1 = strategies[[3]]
         
-        if(pop[y,2] == 1) tmp2 = strategies[1]
-        if(pop[y,2] == 2) tmp2 = strategies[2]
-        if(pop[y,2] == 3) tmp2 = strategies[3]
-      
-        pop[x,1] = pop[x,1] + as.numeric(tournament(length = 10 , stx = tmp1,
-                                          sty =tmp2, payoff = PSR)[1])
+        if(pop[x,2] == 1) tmp2 = strategies[[1]]
+        if(pop[x,2] == 2) tmp2 = strategies[[2]]
+        if(pop[x,2] == 3) tmp2 = strategies[[3]]
+        
+        pop[x,1] = pop[x,1] + as.numeric(tournament(length = 3 , stx = tmp1,
+                                          sty = tmp2, payoff = PSR)[1])
 
-        pop[y,1] = pop[y,1] + as.numeric(tournament(length = 10 , stx = tmp2,
-                                          sty = tmp1, payoff = PSR)[2])
+        pop[y,1] = pop[y,1] + as.numeric(tournament(length = 3 , stx = tmp2,
+                                          sty = tmp1, payoff = PSR)[1])
             }
       # We're also looping over rounds -- do this R number of times
       AFP = sum(pop[1:N, 1]) / N  ## In each round calculate the total fitness of the population
@@ -152,28 +153,79 @@ simulate_2 = function(N=100, G=100, mr = 0.025,
   # Updatre the population matrix -- i.e., reset
   return(data)
 } 
+
+library(dplyr)
+round1 = simulation_tourn(N=50, G=24, mr = 0.25, 
+                         initial.fitness = 1000, rounds = 3, 
+                         cats = 3, PSR, strategies = strategies)  %>% data.frame() 
+
+
+
+
+
+
+ggplot(plot_dat, aes(x = Generation, y = value , group = as.character(variable))) +
+  geom_line()
+
+ggplot(data = dat,
+       aes(x = generation,
+           y = value))+
+  facet_wrap(~Strategy) + 
+  geom_line()
+
+
+
+
 simulate_3 = function(N=100, G=100, mr = 0.025, 
                       initial.fitness = 10, rounds = 5,
                       cats = 3
 ){
 
-  LN = RN = i = 0 
-  RET = t(array(c(9, 0, 0, 1), dim = c(2,2)))
+  LN = RN = 0;
+  i = 1
+  PSR = t(array(c(2,1,3,3,2,1,1,3,2), dim = c(3,3)))
   pop = array(0, dim = c(N, 3)) ## 3 columns, placeholds
   pop[1:N,1] = initial.fitness
   Lottery = array(0, dim = c(N,cats))
-  probs= c(0.05, 0.8, 0.15)
+  probs= c(0.33, 0.33, 0.33)
   Lottery = t(rmultinom(N, size = 1, prob = probs))  
   pop[1:N, 2] = max.col(Lottery)
   pop[1:N, 3] = rbinom(N, 1, 0.5) + 1  ### Initial behavior, random
-  data = array(0, dim = c(G, 1)) ### F?
+  data = array(0, dim = c(G, 3)) ### F?
   for(g in 1:G){
     for (r in 1:rounds){
       for(x in 1:N){
-        y = as.integer(1 + N*runif(1))
-        pop[x,1] = pop[x,1] + PSR[pop[x,2], pop[y,2]] 
-        pop[y,1] = pop[y,1] + PSR[pop[y,2], pop[x,2]] 
+        LN = x - 1; if(LN== 0) LN = N
+        RN = x + 1; if(RN == N + 1) RN = 1
+        ### Now program the interactions
+        pop[x,1]  = pop[x,1]  + PSR[pop[x,2], pop[LN,2]] 
+        pop[LN,1] = pop[LN,1] + PSR[pop[LN,2], pop[x,2]] 
+        pop[x,1]  = pop[x,1]  + PSR[pop[x,2], pop[RN,2]] 
+        pop[RN,1] = pop[RN,1] + PSR[pop[RN,2], pop[x,2]] 
       }
+      for(i in 1:N){
+        LN = i - 1; 
+        if(LN== 0) LN = N
+        RN = i + 1;
+        if(RN == N +1) RN = 1
+        ### Local interaction update rather than replicator dynamic
+        if(pop[i,1]  < pop[LN,1] | pop[i,1]  < pop[RN,1]){
+          if(pop[i,1]  > pop[RN,1])  
+            pop[i,2]  = pop[LN,2]
+          else 
+              pop[i,2] = pop[RN,2]
+          }
+        }
+      
+           
+           
+        pop[LN,1] = pop[LN,1] + PSR[pop[LN,2], pop[x,2]] 
+        pop[x,1]  = pop[x,1]  + PSR[pop[x,2], pop[RN,2]] 
+        pop[RN,1] = pop[RN,1] + PSR[pop[RN,2], pop[x,2]] 
+      }
+      
+      
+      
       # We're also looping over rounds -- do this R number of times
       AFP = sum(pop[1:N, 1]) / N  ## In each round calculate the total fitness of the population
       for (i in 1:cats){
@@ -199,6 +251,24 @@ simulate_3 = function(N=100, G=100, mr = 0.025,
     
   } 
   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   pop[1:N, 3] = runif(N) ## Draw from uniform, length N, replace those values with a random new 'type"
   mutants = round(N*mr*runif(1)*2)
   for(i in 1:mutants){
@@ -241,8 +311,9 @@ Arg
 
 library(ggtern)
 set.seed(1)
-plot <- ggtern(something,
-               aes(V1, V2, time))
+
+plot <- ggtern(round1*100,
+               aes(x=round1[,1], y =round1[,2], round1[,3]))
 plot + stat_density_tern(geom = 'polygon',
                          n         = 1000,
                          aes(fill  = ..level..,
